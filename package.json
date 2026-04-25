@@ -1,0 +1,25 @@
+{
+  "name": "rawwar.github.io",
+  "version": "1.0.0",
+  "description": "My website",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawwar/rawwar.github.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rawwar/rawwar.github.io/issues"
+  },
+  "homepage": "https://github.com/rawwar/rawwar.github.io#readme",
+  "dependencies": {
+    "astro": "^6.1.9"
+  }
+}

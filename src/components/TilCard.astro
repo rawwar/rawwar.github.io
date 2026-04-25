@@ -1,0 +1,52 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  date: Date;
+  tags: string[];
+  href: string;
+}
+
+const { title, description, date, tags, href } = Astro.props;
+const formattedDate = date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+---
+
+<a href={href} class="card til-card">
+  {tags[0] && <span class="tag">{tags[0]}</span>}
+  <div class="til-title">{title}</div>
+  <div class="til-desc">{description}</div>
+  <div class="til-date">{formattedDate}</div>
+</a>
+
+<style>
+  .til-card {
+    display: block;
+  }
+
+  .til-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9em;
+    margin-bottom: 6px;
+  }
+
+  .til-desc {
+    color: var(--text-muted);
+    font-size: 0.78em;
+    line-height: 1.55;
+  }
+
+  .til-date {
+    color: var(--text-dim);
+    font-size: 0.7em;
+    margin-top: 10px;
+  }
+
+  .tag {
+    margin-bottom: 10px;
+  }
+</style>

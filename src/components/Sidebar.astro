@@ -1,0 +1,67 @@
+---
+interface SidebarItem {
+  label: string;
+  href?: string;
+  count?: number;
+  active?: boolean;
+}
+
+interface Props {
+  items: SidebarItem[];
+}
+
+const { items } = Astro.props;
+---
+
+<aside class="sidebar">
+  {items.map(item => (
+    <a
+      href={item.href || '#'}
+      class:list={['sidebar-item', { active: item.active }]}
+    >
+      {item.label}
+      {item.count !== undefined && <span class="sidebar-count">({item.count})</span>}
+    </a>
+  ))}
+</aside>
+
+<style>
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    padding: 28px 20px;
+    border-right: 1px solid var(--border-subtle);
+    font-size: 0.95em;
+  }
+
+  .sidebar-item {
+    display: block;
+    padding: 10px 16px;
+    margin-bottom: 4px;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .sidebar-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .sidebar-item.active {
+    background: var(--gold-bg);
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .sidebar-count {
+    color: var(--text-dim);
+    font-size: 0.8em;
+    margin-left: 6px;
+  }
+
+  @media (max-width: 768px) {
+    .sidebar {
+      display: none;
+    }
+  }
+</style>

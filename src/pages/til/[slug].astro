@@ -1,0 +1,97 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allTil = await getCollection('til');
+  return allTil.map(entry => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const formattedDate = entry.data.date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<BaseLayout title={`${entry.data.title} — TIL`}>
+  <div class="article-page">
+    <article class="article-content">
+      <a href="/til/" class="back-link">&larr; All TILs</a>
+      <div class="article-date">{formattedDate}</div>
+      <h1>{entry.data.title}</h1>
+      <div class="article-tags">
+        {entry.data.tags.map(tag => <span class="tag">{tag}</span>)}
+      </div>
+      <div class="article-body">
+        <Content />
+      </div>
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  .article-page {
+    display: flex;
+    justify-content: center;
+    padding: 40px 48px;
+    min-height: calc(100vh - 53px);
+  }
+
+  .article-content {
+    max-width: 720px;
+    width: 100%;
+  }
+
+  .back-link {
+    color: var(--text-dim);
+    font-size: 0.8em;
+    display: inline-block;
+    margin-bottom: 24px;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover {
+    color: var(--purple);
+  }
+
+  .article-date {
+    color: var(--purple);
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    margin-bottom: 12px;
+  }
+
+  .article-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+
+  .article-body {
+    color: var(--text-body);
+    font-size: 0.88em;
+    line-height: 1.9;
+  }
+
+  .article-body :global(p) {
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .article-page {
+      padding: 24px 16px;
+    }
+  }
+</style>

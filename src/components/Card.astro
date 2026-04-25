@@ -1,0 +1,43 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  icon?: string;
+  href?: string;
+}
+
+const { title, description, icon, href } = Astro.props;
+const Tag = href ? 'a' : 'div';
+---
+
+<Tag class="card" href={href}>
+  {icon && <div class="card-icon" set:html={icon} />}
+  <div class="card-title">{title}</div>
+  <div class="card-desc">{description}</div>
+</Tag>
+
+<style>
+  .card-icon {
+    color: var(--purple);
+    margin-bottom: 16px;
+    line-height: 1;
+  }
+
+  .card-icon :global(svg) {
+    width: 28px;
+    height: 28px;
+  }
+
+  .card-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95em;
+    margin-bottom: 8px;
+  }
+
+  .card-desc {
+    color: var(--text-muted);
+    font-size: 0.82em;
+    line-height: 1.6;
+  }
+</style>

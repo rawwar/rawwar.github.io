@@ -1,0 +1,215 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ViewToggle from '../../components/ViewToggle.astro';
+import TimelineScroller from '../../components/TimelineScroller.astro';
+import { getCollection } from 'astro:content';
+import { render } from 'astro:content';
+
+const allTil = await getCollection('til');
+const sorted = allTil.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+// Get entry dates for the timeline
+const entryDates = sorted.map(e => e.data.date.toISOString().split('T')[0]);
+
+// Pre-render all entries
+const rendered = await Promise.all(
+  sorted.map(async (entry) => {
+    const { Content } = await render(entry);
+    return { entry, Content };
+  })
+);
+---
+
+<BaseLayout title="TIL Scroll — Kalyan">
+  <div class="scroll-view-content">
+    <div class="scroll-view-header">
+      <div>
+        <h1>Today I Learned</h1>
+      </div>
+      <div class="scroll-controls">
+        <div class="scroll-nav">
+          <button class="scroll-nav-btn" id="prevBtn" title="Previous entry">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="scroll-nav-btn" id="nextBtn" title="Next entry">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <ViewToggle activeView="scroll" />
+      </div>
+    </div>
+
+    {sorted.length > 0 ? (
+      <div id="articlesContainer">
+        {rendered.map(({ entry, Content }, index) => (
+          <article
+            class="scroll-article"
+            data-date={entry.data.date.toISOString().split('T')[0]}
+            data-index={index}
+            style={index === 0 ? '' : 'display: none;'}
+          >
+            <div class="scroll-article-date">
+              {entry.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </div>
+            <div class="scroll-article-title">{entry.data.title}</div>
+            <span class="tag scroll-article-tag">{entry.data.tags[0]}</span>
+            <div class="scroll-article-body">
+              <Content />
+            </div>
+          </article>
+        ))}
+      </div>
+    ) : (
+      <div class="empty-state-scroll">
+        <p>No TIL entries yet.</p>
+        <p>Add markdown files to <code>src/content/til/</code> to see them here.</p>
+      </div>
+    )}
+  </div>
+
+  <div id="timelineData" data-entries={entryDates.join(',')} style="display:none;"></div>
+  <TimelineScroller />
+</BaseLayout>
+
+<style>
+  .scroll-view-content {
+    padding: 40px 80px;
+    padding-bottom: 100px;
+    min-height: calc(100vh - 53px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .scroll-view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 720px;
+    margin-bottom: 32px;
+  }
+
+  h1 {
+    margin-bottom: 0;
+  }
+
+  .scroll-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .scroll-nav {
+    display: flex;
+    gap: 8px;
+  }
+
+  .scroll-nav-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--card-surface);
+    color: var(--text-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font);
+  }
+
+  .scroll-nav-btn:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+    box-shadow: 0 0 12px var(--purple-glow);
+  }
+
+  .scroll-nav-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .scroll-article {
+    width: 100%;
+    max-width: 720px;
+  }
+
+  .scroll-article-date {
+    color: var(--purple);
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .scroll-article-title {
+    font-size: 1.4em;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  .scroll-article-tag {
+    margin-bottom: 24px;
+  }
+
+  .scroll-article-body {
+    color: var(--text-body);
+    font-size: 0.88em;
+    line-height: 1.9;
+  }
+
+  .scroll-article-body :global(p) {
+    margin-bottom: 16px;
+  }
+
+  .empty-state-scroll {
+    color: var(--text-dim);
+    font-size: 0.85em;
+    text-align: center;
+    margin-top: 80px;
+  }
+
+  @media (max-width: 768px) {
+    .scroll-view-content {
+      padding: 24px 16px 100px;
+    }
+  }
+</style>
+
+<script>
+  // Wire up entry dates to the timeline
+  const dataEl = document.getElementById('timelineData');
+  const bar = document.getElementById('timelineBar');
+  if (dataEl && bar) {
+    bar.dataset.entries = dataEl.dataset.entries || '';
+  }
+
+  // Handle timeline date selection
+  const articles = document.querySelectorAll<HTMLElement>('.scroll-article');
+  let currentIndex = 0;
+
+  function showArticle(index: number) {
+    if (index < 0 || index >= articles.length) return;
+    articles.forEach(a => a.style.display = 'none');
+    articles[index].style.display = '';
+    currentIndex = index;
+  }
+
+  window.addEventListener('timeline-select', ((e: CustomEvent) => {
+    const date = e.detail.date;
+    const match = Array.from(articles).findIndex(a => a.dataset.date === date);
+    if (match >= 0) showArticle(match);
+  }) as EventListener);
+
+  // Prev/next buttons
+  document.getElementById('prevBtn')?.addEventListener('click', () => {
+    showArticle(currentIndex + 1); // older = higher index since sorted desc
+  });
+  document.getElementById('nextBtn')?.addEventListener('click', () => {
+    showArticle(currentIndex - 1); // newer = lower index
+  });
+</script>

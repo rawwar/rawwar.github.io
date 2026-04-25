@@ -1,0 +1,85 @@
+---
+import SidebarLayout from '../../layouts/SidebarLayout.astro';
+import TilCard from '../../components/TilCard.astro';
+import ViewToggle from '../../components/ViewToggle.astro';
+import { getCollection } from 'astro:content';
+
+const allTil = await getCollection('til');
+const sorted = allTil.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+// Build tag counts for sidebar
+const tagCounts = new Map<string, number>();
+for (const entry of allTil) {
+  for (const tag of entry.data.tags) {
+    tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+  }
+}
+
+const sidebarItems = [
+  { label: 'All Topics', href: '/til/', active: true, count: allTil.length },
+  ...Array.from(tagCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([tag, count]) => ({
+      label: tag,
+      href: `/til/?tag=${tag}`,
+      count,
+    })),
+];
+---
+
+<SidebarLayout title="TIL — Kalyan" sidebarItems={sidebarItems}>
+  <div class="til-header">
+    <div>
+      <h1>Today I Learned</h1>
+      <p class="subtitle">Short notes on things I pick up day to day</p>
+    </div>
+    <ViewToggle activeView="grid" />
+  </div>
+
+  {sorted.length > 0 ? (
+    <div class="grid-auto">
+      {sorted.map(entry => (
+        <TilCard
+          title={entry.data.title}
+          description={entry.data.description}
+          date={entry.data.date}
+          tags={entry.data.tags}
+          href={`/til/${entry.id}/`}
+        />
+      ))}
+    </div>
+  ) : (
+    <p class="empty-state">No TIL entries yet. Start learning and writing!</p>
+  )}
+</SidebarLayout>
+
+<style>
+  .til-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    gap: 16px;
+  }
+
+  h1 {
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 0.85em;
+  }
+
+  .empty-state {
+    color: var(--text-dim);
+    font-size: 0.85em;
+    font-style: italic;
+  }
+
+  @media (max-width: 640px) {
+    .til-header {
+      flex-direction: column;
+    }
+  }
+</style>

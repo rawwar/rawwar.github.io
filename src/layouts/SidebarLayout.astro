@@ -1,0 +1,45 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Sidebar from '../components/Sidebar.astro';
+
+interface SidebarItem {
+  label: string;
+  href?: string;
+  count?: number;
+  active?: boolean;
+}
+
+interface Props {
+  title?: string;
+  sidebarItems: SidebarItem[];
+}
+
+const { title = 'Kalyan', sidebarItems } = Astro.props;
+---
+
+<BaseLayout title={title}>
+  <div class="layout-with-sidebar">
+    <Sidebar items={sidebarItems} />
+    <main class="main-content">
+      <slot />
+    </main>
+  </div>
+</BaseLayout>
+
+<style>
+  .layout-with-sidebar {
+    display: flex;
+    min-height: calc(100vh - 53px);
+  }
+
+  .main-content {
+    flex: 1;
+    padding: 40px 48px;
+  }
+
+  @media (max-width: 768px) {
+    .main-content {
+      padding: 24px 16px;
+    }
+  }
+</style>

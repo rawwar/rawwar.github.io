@@ -1,0 +1,93 @@
+---
+const currentPath = Astro.url.pathname;
+
+const links = [
+  { href: '/', label: 'About' },
+  { href: '/til/', label: 'TIL' },
+  { href: '/want-to-learn/', label: 'Someday' },
+];
+
+function isActive(href: string): boolean {
+  if (href === '/') return currentPath === '/';
+  return currentPath.startsWith(href);
+}
+---
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <a href="/" class="navbar-logo">KALYAN</a>
+    <div class="navbar-links">
+      {links.map(link => (
+        <a href={link.href} class:list={['navbar-link', { active: isActive(link.href) }]}>
+          {link.label}
+        </a>
+      ))}
+    </div>
+  </div>
+  <div class="navbar-right">
+    <a href="https://github.com/rawwar" target="_blank" rel="noopener noreferrer" class="btn-gold">
+      GitHub
+    </a>
+  </div>
+</nav>
+
+<style>
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 28px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+  }
+
+  .navbar-logo {
+    font-weight: 800;
+    font-size: 1.05em;
+    color: var(--text-primary);
+    letter-spacing: 1.5px;
+  }
+
+  .navbar-links {
+    display: flex;
+    gap: 22px;
+    font-size: 0.85em;
+  }
+
+  .navbar-link {
+    color: var(--text-body);
+    transition: color 0.2s;
+  }
+
+  .navbar-link:hover {
+    color: var(--text-primary);
+  }
+
+  .navbar-link.active {
+    color: var(--gold);
+  }
+
+  .navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  @media (max-width: 640px) {
+    .navbar {
+      padding: 12px 16px;
+    }
+    .navbar-left {
+      gap: 20px;
+    }
+    .navbar-links {
+      gap: 14px;
+      font-size: 0.78em;
+    }
+  }
+</style>

@@ -1,0 +1,67 @@
+---
+interface Props {
+  activeView: 'grid' | 'scroll';
+}
+
+const { activeView } = Astro.props;
+---
+
+<div class="view-toggle">
+  <a
+    href="/til/"
+    class:list={['view-toggle-btn', { active: activeView === 'grid' }]}
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="7" height="7" rx="1"/>
+      <rect x="14" y="3" width="7" height="7" rx="1"/>
+      <rect x="3" y="14" width="7" height="7" rx="1"/>
+      <rect x="14" y="14" width="7" height="7" rx="1"/>
+    </svg>
+    Grid
+  </a>
+  <a
+    href="/til/scroll/"
+    class:list={['view-toggle-btn', { active: activeView === 'scroll' }]}
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
+    Scroll
+  </a>
+</div>
+
+<style>
+  .view-toggle {
+    display: flex;
+    align-items: center;
+    background: var(--card-surface);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    font-size: 0.72em;
+  }
+
+  .view-toggle-btn {
+    padding: 6px 14px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+  }
+
+  .view-toggle-btn:hover {
+    color: var(--text-body);
+  }
+
+  .view-toggle-btn.active {
+    background: var(--purple-bg);
+    color: var(--purple);
+  }
+
+  .view-toggle-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+</style>

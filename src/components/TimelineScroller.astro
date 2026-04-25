@@ -1,0 +1,280 @@
+---
+// Client-side interactive component — all logic in the <script> tag
+---
+
+<div class="timeline-bar" id="timelineBar">
+  <div class="timeline-needle"></div>
+  <button class="today-btn" id="todayBtn" title="Jump to today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <circle cx="12" cy="12" r="3" fill="var(--purple)"/>
+    </svg>
+    today
+  </button>
+  <div class="timeline-dirs">
+    <span class="past">&larr; past</span>
+    <span class="future">future &rarr;</span>
+  </div>
+  <div class="timeline-fade-left"></div>
+  <div class="timeline-fade-right"></div>
+  <div class="timeline-track" id="timelineTrack">
+    <div class="timeline-ruler" id="timelineRuler"></div>
+  </div>
+</div>
+
+<style>
+  .timeline-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 72px;
+    background: linear-gradient(180deg, transparent 0%, var(--bg) 20%);
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    user-select: none;
+    z-index: 50;
+  }
+
+  .timeline-needle {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 20px;
+    background: var(--purple);
+    border-radius: 1px;
+    box-shadow: 0 0 8px rgba(187, 146, 243, 0.6);
+    z-index: 10;
+  }
+
+  .timeline-needle::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: var(--purple);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(187, 146, 243, 0.8);
+  }
+
+  .timeline-dirs {
+    position: absolute;
+    top: 6px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 24px;
+    font-size: 0.55em;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+
+  .today-btn {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--purple-bg);
+    border: 1px solid rgba(187, 146, 243, 0.3);
+    color: var(--purple);
+    padding: 4px 12px;
+    border-radius: 14px;
+    font-size: 0.65em;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .today-btn:hover {
+    background: rgba(187, 146, 243, 0.22);
+    border-color: var(--purple);
+    box-shadow: 0 0 12px rgba(187, 146, 243, 0.3);
+  }
+
+  .today-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .timeline-track {
+    position: relative;
+    width: 100%;
+    height: 48px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    cursor: grab;
+    scrollbar-width: none;
+  }
+
+  .timeline-track::-webkit-scrollbar { display: none; }
+  .timeline-track:active { cursor: grabbing; }
+
+  .timeline-ruler {
+    display: flex;
+    align-items: flex-end;
+    height: 100%;
+    padding: 0 50%;
+    white-space: nowrap;
+  }
+
+  .timeline-fade-left,
+  .timeline-fade-right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .timeline-fade-left {
+    left: 0;
+    background: linear-gradient(90deg, var(--bg), transparent);
+  }
+
+  .timeline-fade-right {
+    right: 0;
+    background: linear-gradient(-90deg, var(--bg), transparent);
+  }
+</style>
+
+<script>
+  const ruler = document.getElementById('timelineRuler')!;
+  const track = document.getElementById('timelineTrack')!;
+  const todayBtn = document.getElementById('todayBtn')!;
+
+  // Read entry dates from the page's data attribute
+  const bar = document.getElementById('timelineBar')!;
+  const entryDatesRaw = bar.dataset.entries || '';
+  const entryDates = new Set(entryDatesRaw.split(',').filter(Boolean));
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Generate 6 months of ticks centered on today
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth() - 3, 1);
+  const end = new Date(today.getFullYear(), today.getMonth() + 3, 0);
+  const todayStr = today.toISOString().split('T')[0];
+
+  let current = new Date(start);
+  let todayTick: HTMLElement | null = null;
+
+  while (current <= end) {
+    const dateStr = current.toISOString().split('T')[0];
+    const day = current.getDate();
+    const isEntry = entryDates.has(dateStr);
+    const isToday = dateStr === todayStr;
+    const showLabel = day === 1 || day === 8 || day === 15 || day === 22 || isEntry;
+
+    if (showLabel) {
+      const group = document.createElement('div');
+      group.style.cssText = 'display:flex;flex-direction:column;align-items:center;min-width:80px;position:relative;padding-top:14px;cursor:pointer;';
+      group.dataset.date = dateStr;
+
+      if (isEntry) {
+        group.innerHTML = `
+          <div style="width:5px;height:5px;border-radius:50%;background:var(--purple);margin-bottom:3px;box-shadow:0 0 8px rgba(187,146,243,0.5);"></div>
+          <div style="width:1px;height:18px;background:var(--purple);margin-bottom:4px;box-shadow:0 0 6px rgba(187,146,243,0.4);"></div>
+          <div style="font-size:0.6em;color:var(--purple);letter-spacing:0.5px;">${months[current.getMonth()]} ${day}</div>
+        `;
+      } else {
+        group.innerHTML = `
+          <div style="width:1px;height:14px;background:var(--border);margin-bottom:4px;"></div>
+          <div style="font-size:0.6em;color:var(--text-dim);letter-spacing:0.5px;">${months[current.getMonth()]} ${day}</div>
+        `;
+      }
+
+      if (isToday) todayTick = group;
+
+      group.addEventListener('click', () => {
+        const event = new CustomEvent('timeline-select', { detail: { date: dateStr } });
+        window.dispatchEvent(event);
+      });
+
+      ruler.appendChild(group);
+    } else {
+      const minor = document.createElement('div');
+      minor.style.cssText = 'display:flex;flex-direction:column;align-items:center;min-width:20px;padding-top:24px;';
+      minor.innerHTML = '<div style="width:1px;height:8px;background:var(--border-subtle);"></div>';
+      ruler.appendChild(minor);
+    }
+
+    current.setDate(current.getDate() + 1);
+  }
+
+  // Scroll to today
+  function scrollToToday(smooth: boolean) {
+    if (todayTick) {
+      const target = todayTick.offsetLeft - track.offsetWidth / 2;
+      if (smooth) {
+        track.scrollTo({ left: target, behavior: 'smooth' });
+      } else {
+        track.scrollLeft = target;
+      }
+    }
+  }
+
+  requestAnimationFrame(() => scrollToToday(false));
+  todayBtn.addEventListener('click', () => scrollToToday(true));
+
+  // Drag to scroll
+  let isDragging = false;
+  let startX = 0;
+  let scrollLeft = 0;
+
+  track.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startX = e.pageX - track.offsetLeft;
+    scrollLeft = track.scrollLeft;
+  });
+  track.addEventListener('mouseleave', () => isDragging = false);
+  track.addEventListener('mouseup', () => {
+    isDragging = false;
+    // Snap to nearest labeled tick
+    snapToNearest();
+  });
+  track.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - track.offsetLeft;
+    track.scrollLeft = scrollLeft - (x - startX) * 1.5;
+  });
+
+  function snapToNearest() {
+    const center = track.scrollLeft + track.offsetWidth / 2;
+    const ticks = ruler.querySelectorAll<HTMLElement>('[data-date]');
+    let closestTick: HTMLElement | null = null;
+    let closestDist = Infinity;
+
+    ticks.forEach(tick => {
+      const dist = Math.abs(tick.offsetLeft + tick.offsetWidth / 2 - center);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestTick = tick;
+      }
+    });
+
+    if (closestTick) {
+      const target = closestTick.offsetLeft - track.offsetWidth / 2 + closestTick.offsetWidth / 2;
+      track.scrollTo({ left: target, behavior: 'smooth' });
+
+      const event = new CustomEvent('timeline-select', { detail: { date: closestTick.dataset.date } });
+      window.dispatchEvent(event);
+    }
+  }
+</script>
